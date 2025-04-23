@@ -88,8 +88,13 @@
     <dependencies>
         <dependency>
             <groupId>com.vaadin</groupId>
-<!--            <artifactId>vaadin-core</artifactId>-->  <!-- open source only -->
-            <artifactId>vaadin</artifactId>  <!-- licensed, too -->
+            <artifactId>vaadin-core</artifactId>
+        </dependency>
+        <!-- fixes vulnerable transitive dependency of com.vaadin:vaadin[-core]:24.7.1 -->
+        <dependency>
+            <groupId>io.netty.incubator</groupId>
+            <artifactId>netty-incubator-codec-classes-quic</artifactId>
+            <version>0.0.71.Final</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -99,6 +104,11 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-testbench</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-charts-flow</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -188,6 +198,13 @@
                                     <goal>build-frontend</goal>
                                 </goals>
                                 <phase>compile</phase>
+                            </execution>
+                            <execution>
+                                <id>it</id>
+                                <goals>
+                                    <goal>prepare-frontend</goal>
+                                </goals>
+                                <phase>test-compile</phase>
                             </execution>
                         </executions>
                     </plugin>
