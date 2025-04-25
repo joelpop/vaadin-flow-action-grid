@@ -91,7 +91,7 @@ public class ActionGrid<T> extends Grid<T> {
 
     @Override
     public void setColumnOrder(List<Column<T>> columns) {
-        // because action column is not directly accessible,
+        // because the action column is not directly accessible,
         // yet needs to be included in the grid's column list for setting their order,
         // insert the action column into the column list
         // where it was positioned within the frozen columns
@@ -196,7 +196,7 @@ public class ActionGrid<T> extends Grid<T> {
      * <p>
      * Actions appear in the order they are added.
      * <p>
-     * To supply a handler for an action, use {@link Action#setClickConsumer(SerializableConsumer)}.
+     * To supply a handler for an action, use {@link Action#addClickHandler(SerializableConsumer)}.
      *
      * @param key the unique key to identify the Action, not null
      * @return the Action
@@ -322,6 +322,35 @@ public class ActionGrid<T> extends Grid<T> {
     }
 
     /**
+     * Returns the position of the action column in the grid.
+     * The position can either be at the beginning or the end of the grid,
+     * depending on whether the action column is configured to be frozen to the end.
+     *
+     * @return the position of the action column;
+     * either {@link FrozenColumnPosition#BEGINNING} or {@link FrozenColumnPosition#END}
+     */
+    public FrozenColumnPosition getActionColumnPosition() {
+        return actionColumn.isFrozenToEnd() ? FrozenColumnPosition.END : FrozenColumnPosition.BEGINNING;
+    }
+
+    /**
+     * Sets the position of the action column in the grid.
+     * The action column can be frozen either to the beginning or the end of the grid.
+     *
+     * @param position the position of the action column; must be
+     *                 either {@link FrozenColumnPosition#BEGINNING} or
+     *                 {@link FrozenColumnPosition#END}
+     */
+    public void setActionColumnPosition(FrozenColumnPosition position) {
+        if (position == FrozenColumnPosition.BEGINNING) {
+            freezeActionColumnToBeginning();
+        }
+        else if (position == FrozenColumnPosition.END) {
+            freezeActionColumnToEnd();
+        }
+    }
+
+    /**
      * Return the frozenness of the action column to the beginning of the grid.
      *
      * @return {@code true} if the action column is frozen to the beginning of the grid, {@code false} otherwise
@@ -385,6 +414,12 @@ public class ActionGrid<T> extends Grid<T> {
     }
 
 
+    public enum FrozenColumnPosition {
+        BEGINNING,
+        END
+    }
+
+
     /**
      * Represents an action associated with a key,
      * configurable with dynamic properties for each row's item.
@@ -407,7 +442,7 @@ public class ActionGrid<T> extends Grid<T> {
         private SerializableFunction<T, String> tooltipProvider;
         private SerializablePredicate<T> visiblePredicate;
         private SerializablePredicate<T> enabledPredicate;
-        private SerializableConsumer<T> clickConsumer;
+        private final List<SerializableConsumer<T>> clickHandlers;
 
         /**
          * Construct an action with the specified key and default property providers.
@@ -419,13 +454,13 @@ public class ActionGrid<T> extends Grid<T> {
          */
         Action(String key) {
             this.key = key;
-            setIconProvider(null);
-            setClassNameProvider(null);
-            setAccessibleNameProvider(null);
-            setTooltipProvider(null);
-            setVisiblePredicate(null);
-            setEnabledPredicate(null);
-            setClickConsumer(null);
+            setIcon((SerializableFunction<T, Icon>) null);
+            setClassName((SerializableFunction<T, String>) null);
+            setAccessibleName((SerializableFunction<T, String>) null);
+            setTooltip((SerializableFunction<T, String>) null);
+            setVisible(null);
+            setEnabled(null);
+            clickHandlers = new ArrayList<>();
         }
 
         /**
@@ -472,10 +507,21 @@ public class ActionGrid<T> extends Grid<T> {
          * @param iconProvider the function to compute the icon, or {@code null} for none
          * @return this action, for method chaining
          */
-        public Action setIconProvider(SerializableFunction<T, Icon> iconProvider) {
+        public Action setIcon(SerializableFunction<T, Icon> iconProvider) {
             this.iconProvider = Objects.requireNonNullElseGet(iconProvider, () -> t -> null);
             refreshActionColumn();
             return this;
+        }
+
+        /**
+         * Sets the icon for this action.
+         * This method assigns a specific icon to the action, replacing any existing icon configuration.
+         *
+         * @param icon the icon to set for this action
+         * @return this action, allowing method chaining
+         */
+        public Action setIcon(Icon icon) {
+            return setIcon(t -> icon);
         }
 
         /**
@@ -493,6 +539,8 @@ public class ActionGrid<T> extends Grid<T> {
 
         /**
          * Set the provider for determining the CSS class name of this action.
+         * To provide multiple class names, separate them with spaces.
+         * Note that this may override the default styles set for enabling/disabling.
          * <p>
          * If the provided {@code classNameProvider} is null, a default provider returning
          * an empty string is used.
@@ -500,10 +548,23 @@ public class ActionGrid<T> extends Grid<T> {
          * @param classNameProvider the function to compute the class name, or {@code null} for empty
          * @return this action, for method chaining
          */
-        public Action setClassNameProvider(SerializableFunction<T, String> classNameProvider) {
+        public Action setClassName(SerializableFunction<T, String> classNameProvider) {
             this.classNameProvider = Objects.requireNonNullElseGet(classNameProvider, () -> t -> "");
             refreshActionColumn();
             return this;
+        }
+
+        /**
+         * Sets the CSS class name for this action.
+         * This method assigns a specific class name to the action, replacing any existing class name configuration.
+         * To provide multiple class names, separate them with spaces.
+         * Note that this may override the default styles set for enabling/disabling.
+         *
+         * @param className the class name to set for this action
+         * @return this action, allowing method chaining
+         */
+        public Action setClassName(String className) {
+            return setClassName(t -> className);
         }
 
         /**
@@ -528,10 +589,21 @@ public class ActionGrid<T> extends Grid<T> {
          * @param ariaLabelProvider the function to compute the ariaLabel, or {@code null} for empty
          * @return this action, for method chaining
          */
-        public Action setAccessibleNameProvider(SerializableFunction<T, String> ariaLabelProvider) {
+        public Action setAccessibleName(SerializableFunction<T, String> ariaLabelProvider) {
             this.ariaLabelProvider = Objects.requireNonNullElseGet(ariaLabelProvider, () -> t -> "");
             refreshActionColumn();
             return this;
+        }
+
+        /**
+         * Sets a static aria-label text for this action.
+         * This method assigns a specific aria-label to the action, replacing any existing aria-label configuration.
+         *
+         * @param ariaLabel the aria-label text to set for this action
+         * @return this action, allowing method chaining
+         */
+        public Action setAccessibleName(String ariaLabel) {
+            return setAccessibleName(t -> ariaLabel);
         }
 
         /**
@@ -556,10 +628,21 @@ public class ActionGrid<T> extends Grid<T> {
          * @param tooltipProvider the function to compute the tooltip, or {@code null} for empty
          * @return this action, for method chaining
          */
-        public Action setTooltipProvider(SerializableFunction<T, String> tooltipProvider) {
+        public Action setTooltip(SerializableFunction<T, String> tooltipProvider) {
             this.tooltipProvider = Objects.requireNonNullElseGet(tooltipProvider, () -> t -> "");
             refreshActionColumn();
             return this;
+        }
+
+        /**
+         * Sets a static tooltip text for this action.
+         * This method assigns a specific tooltip to the action, replacing any existing tooltip configuration.
+         *
+         * @param tooltip the tooltip text to set for this action
+         * @return this action, allowing method chaining
+         */
+        public Action setTooltip(String tooltip) {
+            return setTooltip(t -> tooltip);
         }
 
         /**
@@ -584,10 +667,21 @@ public class ActionGrid<T> extends Grid<T> {
          * @param visiblePredicate the predicate to evaluate visibility, or {@code null} for always visible
          * @return this action, for method chaining
          */
-        public Action setVisiblePredicate(SerializablePredicate<T> visiblePredicate) {
+        public Action setVisible(SerializablePredicate<T> visiblePredicate) {
             this.visiblePredicate = Objects.requireNonNullElseGet(visiblePredicate, () -> t -> true);
             refreshActionColumn();
             return this;
+        }
+
+        /**
+         * Sets the visibility for this action.
+         * This method assigns a specific visibility to the action, replacing any existing visibility configuration.
+         *
+         * @param visible the visibility to set for this action
+         * @return this action, allowing method chaining
+         */
+        public Action setVisible(boolean visible) {
+            return setVisible(t -> visible);
         }
 
         /**
@@ -612,10 +706,21 @@ public class ActionGrid<T> extends Grid<T> {
          * @param enabledPredicate the predicate to evaluate enablement, or {@code null} for always enabled
          * @return this action, for method chaining
          */
-        public Action setEnabledPredicate(SerializablePredicate<T> enabledPredicate) {
+        public Action setEnabled(SerializablePredicate<T> enabledPredicate) {
             this.enabledPredicate = Objects.requireNonNullElseGet(enabledPredicate, () -> t -> true);
             refreshActionColumn();
             return this;
+        }
+
+        /**
+         * Sets the enablement for this action.
+         * This method assigns a specific enablement to the action, replacing any existing enablement configuration.
+         *
+         * @param enabled the enablement to set for this action
+         * @return this action, allowing method chaining
+         */
+        public Action setEnabled(boolean enabled) {
+            return setEnabled(t -> enabled);
         }
 
         /**
@@ -624,7 +729,7 @@ public class ActionGrid<T> extends Grid<T> {
          * This method checks the visibility and enablement of the action for the specified
          * item using {@link #isVisibleFor(Object)} and {@link #isEnabledFor(Object)}. If either
          * condition fails, the method returns without action. Otherwise, it invokes the configured
-         * {@code clickConsumer}. This defensive check prevents execution when the UI state might
+         * {@code clickHandlers}. This defensive check prevents execution when the UI state might
          * have been tampered with (e.g., via browser manipulation).
          *
          * @param t the item to process on click
@@ -634,20 +739,18 @@ public class ActionGrid<T> extends Grid<T> {
             if (!isVisibleFor(t) || !isEnabledFor(t)) {
                 return;
             }
-            clickConsumer.accept(t);
+            clickHandlers.forEach(clickHandler -> clickHandler.accept(t));
         }
 
         /**
-         * Set the consumer for handling click events on this action.
-         * <p>
-         * If the provided {@code clickConsumer} is null, a default no-op consumer is used.
+         * Add a consumer for handling click events on this action.
          *
-         * @param clickConsumer the consumer to handle clicks, or {@code null} for no action
+         * @param clickHandler a consumer to handle clicks; non-null
          * @return this action, for method chaining
          */
-        public Action setClickConsumer(SerializableConsumer<T> clickConsumer) {
-            this.clickConsumer = Objects.requireNonNullElseGet(clickConsumer, () -> t -> {});
-            refreshActionColumn();
+        public Action addClickHandler(SerializableConsumer<T> clickHandler) {
+            Objects.requireNonNull(clickHandler, "clickHandler cannot be null.");
+            this.clickHandlers.add(clickHandler);
             return this;
         }
     }

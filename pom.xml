@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.vaadin.addons.joelpop</groupId>
-    <artifactId>action-grid</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <name>Flow Grid with Action Column</name>
+    <artifactId>flow-action-grid</artifactId>
+    <version>1.0.0</version>
+    <name>Vaadin Flow Grid with Action Column</name>
     <description>
         A Flow Grid with a dedicated action column.
         Actions are added to the Grid's action column and configured
@@ -28,10 +28,14 @@
     <properties>
         <vaadin.version>24.7.1</vaadin.version>
 
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <jetty-maven-plugin.version>12.0.18</jetty-maven-plugin.version>
     </properties>
 
     <repositories>
@@ -82,6 +86,12 @@
                 <scope>import</scope>
                 <version>${vaadin.version}</version>
             </dependency>
+            <!-- fixes vulnerable transitive dependency of com.vaadin:vaadin[-core]:24.7.1 -->
+            <dependency>
+                <groupId>io.netty.incubator</groupId>
+                <artifactId>netty-incubator-codec-classes-quic</artifactId>
+                <version>0.0.71.Final</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -90,12 +100,7 @@
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-core</artifactId>
         </dependency>
-        <!-- fixes vulnerable transitive dependency of com.vaadin:vaadin[-core]:24.7.1 -->
-        <dependency>
-            <groupId>io.netty.incubator</groupId>
-            <artifactId>netty-incubator-codec-classes-quic</artifactId>
-            <version>0.0.71.Final</version>
-        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
@@ -141,7 +146,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty.ee10</groupId>
                 <artifactId>jetty-ee10-maven-plugin</artifactId>
-                <version>12.0.15</version>
+                <version>${jetty-maven-plugin.version}</version>
                 <configuration>
                     <scan>-1</scan>
                     <!-- Use test scope because the UI/test classes are in

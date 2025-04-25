@@ -51,18 +51,18 @@ public class ActionGridViewContent extends Composite<Div> {
         actionGrid.addColumn(ToggleItem::getInfo);
 
         actionGrid.addAction(TOGGLE_ACTION_KEY)
-                .setIconProvider(item -> item.isOn() ? VaadinIcon.CHECK.create() : VaadinIcon.CLOSE.create())
-                .setClassNameProvider(item -> item.isOn() ? LumoUtility.TextColor.SUCCESS : LumoUtility.TextColor.ERROR)
-                .setTooltipProvider(item -> item.isOn() ? "On" : "Off")
-                .setAccessibleNameProvider(item -> "Toggle item state.")
-                .setVisiblePredicate(ToggleItem::isVisible)
-                .setEnabledPredicate(ToggleItem::isEnabled)
-                .setClickConsumer(item -> {
+                .setIcon(item -> item.isOn() ? VaadinIcon.CHECK.create() : VaadinIcon.CLOSE.create())
+                .setClassName(item -> item.isOn() ? LumoUtility.TextColor.SUCCESS : LumoUtility.TextColor.ERROR)
+                .setTooltip(item -> item.isOn() ? "On" : "Off")
+                .setAccessibleName(item -> "Toggle item state.")
+                .setVisible(ToggleItem::isVisible)
+                .setEnabled(ToggleItem::isEnabled)
+                .addClickHandler(item -> {
                     item.setOn(!item.isOn());
-                    actionGrid.refreshActionColumn();
+                    actionGrid.getDataCommunicator().refresh(item);
                 });
         actionGrid.addAction(NOOP_ACTION_KEY)
-                .setIconProvider(item -> VaadinIcon.EYE.create());
+                .setIcon(item -> VaadinIcon.EYE.create());
 
         actionGrid.setItems(List.of(
                 new ToggleItem("Off/Invisible/Disabled", "", false,false, false),

@@ -327,15 +327,23 @@ public class ActionGridTest {
     @Test
     public void actionColumnFreezing() {
         var actionGrid = new ActionGrid<ToggleItem>();
+        assertEquals(ActionGrid.FrozenColumnPosition.END, actionGrid.getActionColumnPosition());
         assertFalse(actionGrid.isActionColumnFrozenToBeginning());
         assertTrue(actionGrid.isActionColumnFrozenToEnd());
 
         actionGrid.freezeActionColumnToBeginning();
+        assertEquals(ActionGrid.FrozenColumnPosition.BEGINNING, actionGrid.getActionColumnPosition());
         assertTrue(actionGrid.isActionColumnFrozenToBeginning());
         assertFalse(actionGrid.isActionColumnFrozenToEnd());
 
-        actionGrid.freezeActionColumnToEnd();
+        actionGrid.setActionColumnPosition(ActionGrid.FrozenColumnPosition.END);
+        assertEquals(ActionGrid.FrozenColumnPosition.END, actionGrid.getActionColumnPosition());
         assertFalse(actionGrid.isActionColumnFrozenToBeginning());
         assertTrue(actionGrid.isActionColumnFrozenToEnd());
+
+        actionGrid.setActionColumnPosition(ActionGrid.FrozenColumnPosition.BEGINNING);
+        assertEquals(ActionGrid.FrozenColumnPosition.BEGINNING, actionGrid.getActionColumnPosition());
+        assertTrue(actionGrid.isActionColumnFrozenToBeginning());
+        assertFalse(actionGrid.isActionColumnFrozenToEnd());
     }
 }
