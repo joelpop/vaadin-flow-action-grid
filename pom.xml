@@ -7,7 +7,7 @@
     <groupId>org.vaadin.addons.joelpop</groupId>
     <artifactId>flow-action-grid</artifactId>
     <version>1.0.0</version>
-    <name>Vaadin Flow Grid with Action Column</name>
+    <name>Grid with Action Column for Vaadin Flow</name>
     <description>
         A Flow Grid with a dedicated action column.
         Actions are added to the Grid's action column and configured
